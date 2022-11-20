@@ -1,41 +1,101 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Vessel : MonoBehaviour
 {
-    public KeyCode left;
-    public KeyCode right;
-    public float VesselMoveSpeed = 10.0f;
-    public Rigidbody2D rb;
-    public Vector2 movment;
+    //All sprites sourced from https://opengameart.org/content/2d-spaceships
+    private float VesselMoveSpeed = 30.0f; //Modifer for move speed
+    public Rigidbody rb;
+    public Collider collider;
+    private float hInput; //Input for unities default horizontal keybinds
+    public bool IsAlive = true; //Bool toggles Life and Death Functions
+    public bool SheildActive = false; //WORK IN PROGRESS. LINKED TO POWERUP CLASS. NOT FUNCTIONAL
 
-    // Start is called before the first frame update
+    //UI: RESTART, AND A GAME OVER YOU HAVEW DIED
+    [SerializeField] TextMeshProUGUI Deadui;
+    [SerializeField] TextMeshProUGUI Restartui;
+
+
+    //[SerializeField] Asteroid asteroidscript;
+
+    //AUDIO SOIURCES AND SFX
+    [SerializeField] AudioSource audio;
+    [SerializeField] AudioClip Dead;
+    [SerializeField] AudioClip DeathExplosion;
+
+
+    //AUDIO SOURCE SELECTION
+    private void Awake()
+    {
+        audio = GetComponent<AudioSource>();
+    }
+
+    //initialize vessel rigidbody
+    //sets UI intial boolen values
+    //Fixes Z postion -WORK IN PROGRESS-
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        Deadui.enabled = false;
+        Restartui.enabled = false;
+        rb = GetComponent<Rigidbody>();
+        collider = GetComponent<Collider>();
+        rb.constraints = RigidbodyConstraints.FreezePositionZ;
     }
 
-    // Update is called once per frame
+    //Input for fixed update movment
     void Update()
     {
-        if (Input.GetKey(left))
+        hInput = Input.GetAxis("Horizontal") * VesselMoveSpeed;
+    }
+
+
+
+    //here the actual movment is calculated
+    //Input form the player only reaches this movment if the player is still alive
+    private void FixedUpdate()
+    {
+        if (IsAlive)
         {
-            movment = new Vector2(VesselMoveSpeed * -1 * Time.deltaTime, 0);
-        }
-        else if (Input.GetKey(right))
-        {
-            movment = new Vector2(VesselMoveSpeed * Time.deltaTime, 0);
+            rb.MovePosition(this.transform.position + this.transform.right * hInput * Time.fixedDeltaTime);
         }
     }
 
-    private void FixedUpdate()
+    //Checks for collisions with Asteroids and Powerup
+    //POWER UP IS NON FUNCTIONAL
+    private void OnCollisionEnter(Collision collision)
     {
-        moveVessel(movment);
+
+        if (collision.gameObject.name == "PowerUp")
+        {
+            Debug.Log("SheildActive");
+            SheildActive = true;
+            collider.enabled = !collider.enabled;
+        }
+
+        if (collision.gameObject.name == "Asteroid(Clone)")
+        {
+            Debug.Log("I'M HIT");
+            SheildCheck();
+        }
     }
-    void moveVessel(Vector2 direction)
+
+    //executes when a collision is detected
+    //Was to be used for a sheild powerup object NOT CYRRENTLY IMPLIMENTED
+    private void SheildCheck()
     {
-        rb.MovePosition((Vector2)transform.position + (direction * VesselMoveSpeed * Time.deltaTime));
+        if (SheildActive == false)
+        {
+            Deadui.enabled = true;
+            IsAlive = false;
+            Debug.Log("I'M DEAD");
+            new WaitForSecondsRealtime(2);
+            Restartui.enabled = true;
+            audio.PlayOneShot(Dead);
+            audio.PlayOneShot(DeathExplosion);
+        }
     }
+
 
 }

@@ -4,29 +4,44 @@ using UnityEngine;
 
 public class Asteroid : MonoBehaviour
 {
-    public float Speed;
-    private Rigidbody2D rb2d;
-    public Vector2 Movment;
+    [SerializeField] GameObject Asteroidet;
+    public float AsteroidSpeed = -5.0f; //NEED TO INCRIMENT
+    private bool StopSpawning = false; //Bool that when true stops the spawning
+    public float spawnTime; //initial delay from game start to first spawn
+    public float spawnDelay; //delayfrom after fisrt, this will slowly decrease over time
 
-    void Start()
+    private void Start()
     {
-        transform.position = new Vector2(Random.Range(-6, 6), Random.Range(5, 7));
-        rb2d = GetComponent<Rigidbody2D>();
-    }
-
-    
-    void Update()
-    {
-        Movment = new Vector2(0, Speed * -1 * Time.deltaTime);
+        //Refrence https://www.youtube.com/watch?v=1h2yStilBWU
+        //InvokeRepeating Lets us call SpawnAsteroid on a delay
+        //this delay slowly shrinks as the Method is called
+        InvokeRepeating("SpawnAsteroid", spawnTime, spawnDelay);
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        moveRock(Movment);
+        if(Timer.StopAteroidsFlag == true)
+        {
+            StopSpawning = true;
+        }
     }
-    void moveRock(Vector2 direction)
+
+    public void SpawnAsteroid()
     {
-        rb2d.velocity = direction * Speed;
+        //Below are the intialzers fro each clone
+        //each clone will have a random x. and Y range from here it will fall
+        //NEED TO ADD SPIN AND SIZE CHANGE
+        //POSSIBLE FOR ASTEROIDS TO IGNORE HITTING EACH OTHER?
+        GameObject newAsteroid = Instantiate(Asteroidet, this.transform.position + new Vector3(Random.Range(-6, 6), Random.Range(-1, 5), 0), this.transform.rotation);
+        Rigidbody AsteroidRB = newAsteroid.GetComponent<Rigidbody>();
+        AsteroidRB.velocity = this.transform.up * AsteroidSpeed;
+        spawnDelay -= 0.4f;
+
+        //If True Stops calling this method
+        if (StopSpawning)
+        {
+            CancelInvoke();
+        }
     }
-    //reff chapter 9, 7. movment/collision
+
 }
